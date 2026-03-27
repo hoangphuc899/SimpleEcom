@@ -1,0 +1,63 @@
+@page
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<IdentityUser> SignInManager
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Đăng ký";
+}
+@functions{
+    public async Task<IActionResult> OnPostAsync(string email, string password, string confirmPassword)
+    {
+        if(password != confirmPassword){
+            ModelState.AddModelError(string.Empty, "Mật khẩu xác nhận không khớp");
+            return Page();
+        }  
+        if(ModelState.IsValid){
+            var user = new IdentityUser{UserName = email, Email = email};
+            var result = await UserManager.CreateAsync(user, password);
+            if(result.Succeeded){
+                TempData["SuccessMessage"] = "Chúc mừng! Bạn đã đăng ký tài khoản thành công!";
+                return RedirectToPage("/Account/Login");
+            }
+            foreach(var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+        }
+        return Page();
+    }
+}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow border-0">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Đăng ký</h2>
+                    <form method="post">
+                        <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input name="email" type="email" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu</label>
+                            <input name="password" type="password" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Xác nhận mật khẩu</label>
+                            <input name="confirmPassword" type="password" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 fw-bold">
+                            Tạo tài khoản
+                        </button>
+                    </form>
+                    <div class="mt-3 text-center">
+                        <span>Đã có tài khoản? </span>
+                        <a href="/Identity/Account/Login" class="btn btn-info fw-bold">
+                            <i class="bi bi-shield-lock me-1"></i>Đăng nhập
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

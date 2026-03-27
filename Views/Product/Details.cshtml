@@ -1,0 +1,415 @@
+@model SimpleEcom.Models.Product
+@using System.Security.Claims
+
+@{
+    bool isLiked = ViewBag.IsLiked ?? false;
+}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item active">@Model.Name</li>
+        </ol>
+    </nav>
+    <div class="card shadow-sm border-0 p-4">
+        <div class="row">
+            <div class="col-md-5 border-end">
+                <div id="productCarousel" class="carousel slide" data-bs-ride = "false">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <img src="@Model.ImageUrl" class="d-block w-100 rounded" style="height: 400px; object-fit: contain;" />
+                        </div>
+                        @if(!string.IsNullOrEmpty(Model.VideoUrl)){
+                            <div class="carousel-item">
+                                <div class="d-flex justify-content-center align-items-center bg-dark rounded" style="height: 400px;">
+                                    <video controls class="w-100" style="max-height: 400px;">
+                                        <source src="@Model.VideoUrl" type="video/mp4" />
+                                        Trình duyệt của bạn không hỗ trợ phát video
+                                    </video>
+                                </div>
+                            </div>
+                        }
+                        @if(Model.Images != null && Model.Images.Any())
+                        {
+                            foreach(var img in Model.Images)
+                            {
+                                <div class="carousel-item">
+                                    <img src="@img.Url" class="d-block w-100 rounded" style="height: 400px; object-fit: contain;" />
+                                </div>
+                            }
+                        }
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target = "#productCarousel" data-bs-slide = "prev">
+                        <span class="carousel-control-prev-icon bg-dark rounded-circle"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target = "#productCarousel" data-bs-slide = "next">
+                        <span class="carousel-control-next-icon bg-dark rounded-circle"></span>
+                    </button>
+                </div>
+                <div class="d-flex mt-3 gap-2 overflow-auto pb-2">
+                    <div class="border rounded p-1" style="width: 60px; height: 60px; cursor: pointer; border: 2px solid #ff0000;" data-bs-target="#productCarousel" data-bs-slide-to="0">
+                        <img src="@Model.ImageUrl" class="thumb-item" style="object-fit: cover; width: 100%; height: 100%;" />
+                    </div>
+                    @{int index = 1;}
+                    @if(!string.IsNullOrEmpty(Model.VideoUrl)){
+                        <div class="thumb-item position-relative border rounded p-1" style="width: 60px; height: 60px; cursor: pointer; opacity: 0.6;" data-bs-target="#productCarousel" data-bs-slide-to="@index">
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="width: 100%; height: 100%; filter: brightness(0.5);">
+                                <i class="bi bi-play-circle-fill position-absolute top-50 start-50 translate-middle text-danger" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                        index++;
+                    }
+                    @if(Model.Images != null)
+                    {
+                        foreach(var img in Model.Images)
+                        {
+                            <div class="border rounded p-1" style="width: 60px; height: 60px; cursor: pointer; opacity: 0.6;" data-bs-target="#productCarousel" data-bs-slide-to="@index">
+                                <img src="@img.Url" class="thumb-item" style="width: 100%; height: 100%; object-fit: cover;" />
+                            </div>
+                            ++index;
+                        }
+                    }
+                </div>
+            </div>
+            <div class="col-md-7 ps-md-5">
+                <h2 class="fw-bold text-dark">@Model.Name</h2>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="text-warning me-2">
+                        @{
+                            double avg = ViewBag.AverageRating;
+                            for(int i = 1; i <= 5; ++i){
+                                if(i <= avg) {<i class="bi bi-star-fill"></i>}
+                                else if(i - avg < 1) {<i class="bi bi-star-half"></i>}
+                                else {<i class="bi bi-star"></i>}
+                            }
+                            <a href="#" class="ms-3 text-decoration-none" data-bs-toggle = "modal" data-bs-target="#reviewsModal">
+                                Xem tất cả (@ViewBag.ReviewCount đánh giá)
+                            </a>
+                        }
+                    </div>
+                    <span class="fw-bold">@avg.ToString("0.0")</span>
+                </div>
+                <div class="text-muted border-start ps-2">Đã bán @Model.SoldCount</div>
+                <button type="button" id = "btn-wishlist" class="btn @(isLiked ? "btn-danger": "btn-outline-danger") btn-sm rounded-pill border-1 fs-6" data-id = "@Model.Id">
+                    <i class="bi @(isLiked ? "bi-heart-fill": "bi-heart")"></i> Yêu thích
+                </button>
+                <div class="p-3 bg-light rounded mb-2">
+                    <h3 class="text-primary fw-bold mb-0">@Model.Price.ToString("N0") đ</h3>
+                </div>
+                <div class="mb-4 text-success small fw-bold">
+                    <i class="bi bi-calendar-check me-1"></i>
+                    Dự kiến nhận hàng: 2 - 4 ngày.
+                </div>
+                <div class="mb-4">
+                    <h6 class="fw-bold">Mô tả:</h6>
+                    <p class="text-secondary" style="white-space: pre-line;">@Model.Description</p>
+                </div>
+                <div class="mb-4">
+                    <p>
+                        Trạng thái:
+                            @if(Model.Stock > 0)
+                            {
+                                <span class="text-success fw-bold">Còn hàng (@Model.Stock)</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger fw-bold">Hết hàng</span>
+                            }
+                    </p>
+                </div>
+                <div class="d-grid gap-2 d-md-flex mt-5">
+                    <a href="/Cart/AddToCart/@Model.Id" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@if (ViewBag.RelatedProducts != null)
+{
+    <div class="mt-5">
+        <h4 class="mb-4 fw-bold"><i class="bi bi-stars-text-warning"></i>Sản phẩm tương tự</h4>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+            @foreach (var item in (List<SimpleEcom.Models.Product>)ViewBag.RelatedProducts)
+            {
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name"
+                            style="height: 150px; object-fit: cover;" />
+                        <div class="card-body text-center p-2">
+                            <h6 class="card-title text-truncate">
+                                <a href="/product/details/@item.Id" class="text-decoration-none text-dark">@item.Name</a>
+                            </h6>
+                            <p class="text-primary small fw-bold mb-2">@item.Price.ToString("N0") đ</p>
+                            <a href="/product/details/@item.Id" class="btn btn-sm btn-outline-primary rounded-pill w-100"><i
+                                    class="bi bi-info-circle"></i> Chi tiết</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+</div>
+<div class="modal fade" id="reviewsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Đánh giá sản phẩm @Model.Name</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-2 rounded">
+                    <span class="fw-bold">@Model.Reviews.Count đánh giá</span>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            Sắp xếp theo: @(ViewBag.CurrentSort == "popular" ? "Phổ biến":"Mới nhất")
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="?id=@Model.Id&sortOrder=newest">
+                                    Mới nhất
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="?id=@Model.Id&sortOrder=popular">
+                                    Phổ biến
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                @if (Model.Reviews != null && Model.Reviews.Any())
+                {
+                    foreach (var review in Model.Reviews)
+                    {
+                        <div class="border-bottom mb-3 pb-2">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong class="d-block">@review.FullName</strong>
+                                    <small class="text-muted">@review.DateCreated.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                <div class="text-warning">
+                                    @for(int i = 1; i <= 5; ++i){
+                                        if(i <= ViewBag.AverageRating) {<i class="bi bi-star-fill"></i>}
+                                        else if(i - ViewBag.AverageRating < 1) {<i class="bi bi-star-half"></i>}
+                                        else {<i class="bi bi-star"></i>}
+                                    }
+                                </div>
+                            </div>
+                            <p class="mt-2 mb-1">@review.Comment</p>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-danger border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-flag"></i> Báo cáo
+                                    </button>
+                                    <ul class="dropdown-menu shadow border-0">
+                                        <li>
+                                            <h6 class="dropdown-header">Lý do báo cáo</h6>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item btn-report" style="cursor: pointer;" data-id="@review.Id" data-reason="Spam">
+                                                Nội dung rác (Spam)
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item btn-report" style="cursor: pointer;" data-id="@review.Id" data-reason="Ngôn từ thô tục">
+                                                Ngôn từ không phù hợp
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item btn-report" style="cursor: pointer;" data-id="@review.Id" data-reason="Sai lệch thông tin">
+                                                Thông tin sai sự thật
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <a class="dropdown-item btn-report text-danger" style="cursor: pointer;" data-id="@review.Id" data-reason="Khác">
+                                                Lý do khác...
+                                            </a>
+                                            <div id="other-reason-@review.Id" class="mt-2">
+                                                <div class="input-group input-group-sm">
+                                                    <input type="text" id="input-reason-@review.Id" class="form-control" placeholder="Nhập lý do cụ thể..." />
+                                                    <button class="btn btn-danger btn-send-custom-report" data-id="@review.Id" type="button">Gửi</button>
+                                                    <button class="btn btn-outline-secondary btn-cancel-report" data-id="@review.Id" type="button">Hủy</button>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary border-0 btn-like" data-id = "@review.Id">
+                                    <i class="bi bi-hand-thumps-up@(review.LikeCount > 0 ? "-fill":"")"></i> Hữu ích (<span class="like-count">@review.LikeCount</span>)
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+                else { <p class="text-center">Chưa có đánh giá nào.</p> }
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .thumb-btn {opacity: 0.6;}
+    .thumb-btn:hover {opacity: 1; border-color: #dee2e6;}
+    .thumb-btn.active {opacity: 1; border: 2px solid #0d6efd;}
+    .carousel-item img {background-color: #fff;}
+    .dropdown-item:hover,
+    .dropdown-item.text-danger:hover {
+        background-color: #0d6efd !important; 
+        color: #dee2e6 !important;
+    }
+</style>
+@section Scripts
+{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function(){
+            $(document).on('click', '.btn-like', function(){ // click vào trước
+                var btn = $(this)
+                var id = btn.data('id') // lấy đối số
+                btn.prop('disabled', true) // ngăn bấm liên tục
+                $.post('/Product/LikeReview', {reviewId: id}, function(data){
+                    if(data.success){
+                        btn.find('.like-count').text(data.newCount) // tìm class tương ứng
+                        var icon = btn.find('i')
+                        if(data.isLiked){
+                            icon.removeClass('bi-hand-thumbs-up').addClass('bi-hand-thumbs-up-fill')
+                            btn.addClass('text-primary')
+                        }else{
+                            icon.removeClass('bi-hand-thumbs-up-fill').addClass('bi-hand-thumbs-up')
+                            btn.removeClass('text-primary')
+                        }
+                    }else alert(data.message)
+                }).fail(function(xhr){
+                    console.error("Lỗi: ", xhr.status)
+                    alert("Lỗi kết nối hoặc quyền truy cập (405/500)")
+                }).always(function(){
+                    btn.prop('disabled', false)
+                })
+            })
+            const urlParams = new URLSearchParams(window.location.search)
+            if(urlParams.has('sortOrder')){
+                var myModalElement = document.getElementById('reviewsModal')
+                if(myModalElement){
+                    var myModal = new bootstrap.Modal(myModalElement)
+                    myModal.show()
+                }
+            }
+        })
+    </script>
+    <script>
+        $(document).ready(function(){
+            $('#btn-wishlist').click(function(e){
+                e.preventDefault() // chặn load lại trang khi thả tim
+                var btn = $(this) // lấy id của nút bấm
+                var icon = btn.find('i') // từ nút bấm tìm đến icon
+                var productId = btn.data('id') // lấy giá trị từ data-id để truyền đối số
+
+                btn.prop('disabled', true) // chặn bấm liên tục
+                $.ajax({ // truyền vào controller để thêm vào database
+                    url: '/WishList/ToggleWishList', type: 'POST', data: {productId: productId}, success: function(response){
+                        if(icon.hasClass('bi-heart')){ // đổi màu icon
+                            icon.removeClass('bi-heart').addClass('bi-heart-fill')
+                            btn.removeClass('btn-outline-danger').addClass('btn-danger')
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Đã thêm vào yêu thích',
+                                timer: 1500,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            })
+                        }  
+                        else{
+                            icon.removeClass('bi-heart-fill').addClass('bi-heart')
+                            btn.removeClass('btn-danger').addClass('btn-outline-danger')
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Đã xóa khỏi yêu thích',
+                                timer: 1500,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            })
+                        } 
+                    }, 
+                    error: function(xhr) {
+                        Swal.fire('Lỗi', 'Vui lòng đăng nhập để thực hiện', 'error')
+                    },
+                    complete: function(){btn.prop('disabled', false)}
+                })
+            })
+        })
+        var myCarousel = document.getElementById('productCarousel') // chọn Id trước
+        var thumbnails = document.querySelectorAll('.thumb-item') // 1 mảng
+        myCarousel.addEventListener('slid.bs.carousel', function(e){
+            var video = myCarousel.querySelector('video') // chọn thẻ sau
+            if(video) video.pause()
+            var activeIndex = e.to // lấy vị trí của slide đang hiển thị
+            thumbnails.forEach(t => {
+                t.style.border = "2px solid transparent"
+                t.style.opacity = "0.6"
+            })
+            if(thumbnails[activeIndex]){
+                thumbnails[activeIndex].style.border = "2px solid #ff0000"
+                thumbnails[activeIndex].style.opacity = "1"
+                thumbnails[activeIndex].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                })
+            }
+        })
+    </script>
+    <script>
+        $(document).on('click', '.btn-report', function(e){
+            e.preventDefault()
+            var reviewId = $(this).data('id')
+            var reason = $(this).data('reason')
+            var btn = $(this)
+            
+            if(reason === "Khác"){
+                $(`#other-reason-${reviewId}`).focus()
+                return
+            }
+            Swal.fire({
+                title: 'Báo cáo bình luận này?',
+                text: "Lý do: " + reason,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Gửi báo cáo'
+            }).then((result) => {
+                if(result.isConfirmed) sendReport(reviewId, reason)
+            })
+        })
+        $(document).on('click', '.btn-send-custom-report', function(){
+            var reviewId = $(this).data('id')
+            var customReason = $(`#input-reason-${reviewId}`).val()
+            
+            if(!customReason || customReason.trim() === ""){
+                Swal.fire('Lỗi', 'Vui lòng nhập lý do cụ thể', 'error')
+                $(`#input-reason-${reviewId}`).focus
+                return
+            }
+            sendReport(reviewId, customReason)
+            $(`#other-reason-${reviewId}`).val('')
+        })
+        function sendReport(reviewId, reason){
+            $.ajax({
+                url: '/Product/ReportReview', type: 'POST', data: {id: reviewId, reason: reason},
+                success: function(res){
+                    if(res.success)
+                        Swal.fire('Đã gửi!', 'Chúng tôi sẽ sớm xem xét báo cáo của bạn', 'success')
+                    else Swal.fire('Lỗi', res.message, 'error')
+                },
+                error: function(){
+                    Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ', 'error')
+                }
+            })
+        }
+    </script>
+}

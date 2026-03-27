@@ -1,0 +1,97 @@
+@model SimpleEcom.Models.Product;
+
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white py-3">
+            <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa sản phẩm</h5>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên sản phẩm</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Giá bán (VNĐ)</label>
+                                <input asp-for="Price" type="number" class="form-control" required />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Số lượng trong kho</label>
+                                <input asp-for="Stock" type="number" class="form-control" min="0" required />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Danh mục</label>
+                                <select asp-for="Category" class="form-select">
+                                    <option value="Điện tử">Điện tử</option>
+                                    <option value="Gia dụng">Gia dụng</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-5 border-start ps-4">
+                        <div class="mb-4 text-center">
+                            <label class="form-label fw-bold d-block text-start">
+                                Ảnh chính
+                            </label>
+                            <div class="border rounded p-2 mb-2" style="height: 180px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                <img src="@Model.ImageUrl" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                            </div>
+                            <input type="file" name="mainImage" class="form-control form-control-sm" accept="image/*">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Thêm ảnh phụ mới</label>
+                            <input type="file" name="subImages" class="form-control form-control-sm" multiple accept="image/*" />
+                        </div>
+                        <div class="mb-4 text-center">
+                            <label class="form-label fw-bold d-block text-start">
+                                Video sản phẩm
+                            </label>
+                            <div class="border rounded p-2 mb-2 bg-light" style="height: 150px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                @if(!string.IsNullOrEmpty(Model.VideoUrl)){
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                                    <small class="text-success mt-2">Đang có video</small>
+                                }else{
+                                    <i class="bi bi-camera-video text-muted" style="font-size: 2rem;"></i>
+                                    <small class="text-muted mt-2">Chưa có video</small>
+                                }
+                            </div>
+                            <input type="file" name="videoFile" class="form-control form-control-sm" accept="video/mp4,video/*" />
+                        </div>
+                        @if(Model.Images != null && Model.Images.Any()){
+                            <div class="mt-4">
+                                <label class="form-label fw-bold">
+                                    Ảnh phụ hiện tại (@Model.Images.Count)
+                                </label>
+                                <div class="d-flex gap-2 overflow-auto pb-2">
+                                    @foreach(var img in Model.Images){
+                                        <div class="position-relative border rounded p-1" style="width: 80px; height: 80px;">
+                                            <img src="@img.Url" class="w-100 h-100" style="object-fit: cover;" />
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <hr />
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a href="/admin/products" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-check-lg"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

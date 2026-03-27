@@ -1,0 +1,256 @@
+@model IEnumerable<SimpleEcom.Models.Order>
+@using SimpleEcom.Models
+
+@if(TempData["Success"] != null){
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss = "alert" aria-label="Close"></button>
+    </div>
+}
+@if(TempData["Error"] != null){
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss = "alert" aria-label="Close"></button>
+    </div>
+}
+@{
+    void renderReview(SimpleEcom.Models.Review review){
+        <div class="mt-1">
+            <span class="badge bg-light text-dark border fw-normal" style="font-size: 0.7rem;" data-bs-toggle="tooltip" title="Bình luận: @review.Comment">
+                @for(int i = 1; i <= 5; ++i){
+                    <i class="bi @(i <= review.Rating ? "bi-star-fill text-warning":"bi-star text-muted")" style="font-size: 10px;"></i>
+                }
+                <span class="ms-1 text-muted">(@review.Rating / 5)</span>
+            </span>
+            @if(!string.IsNullOrEmpty(review.Comment)){
+                <div class="text-muted" style="font-size: 11px; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <i class="bi bi-chat-dots"></i> @review.Comment
+                </div>
+            }
+        </div>
+    }
+}
+<table class="table table-sm table-bordered">
+    <thead class="bg-light">
+        <tr>
+            <td>Khách hàng</td>
+            <td>Sản phẩm đã mua</td>
+            <td>Thành tiền</td>
+            <td>Trạng thái</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var order in Model){
+            <tr>
+                <td>
+                    <b>@order.CustomerName</b> <br />
+                    <small>SĐT: @order.Phone</small>
+                    <small class="text-muted"><i class="bi bi-clock"></i> Đặt lúc: @order.OrderDate?.ToString("HH:mm dd/MM")</small>
+                </td>
+                <td>
+                    @if(!string.IsNullOrEmpty(order.OrderItemsJson)){
+                        var items = Newtonsoft.Json.JsonConvert.DeserializeObject<List<CartItem>>(order.OrderItemsJson);
+                        @foreach(var p in items){
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>- @p.ProductName (x @p.Quantity)</span>
+                                @if(order.Status == "Hoàn thành" && order.DateCompleted != null){
+                                    var daysleft = (DateTime.Now - order.DateCompleted.Value).TotalDays;
+                                    var userReviews = ViewBag.UserReviews as List<SimpleEcom.Models.Review>;
+                                    var currentReview = userReviews?.FirstOrDefault(r => r.ProductId == p.ProductId && r.OrderId == order.Id);
+                                    if(daysleft <= 7){
+                                        if(currentReview == null){
+                                            <a href="/Product/WriteReview?ProductId=@p.ProductId&orderId=@order.Id" class="btn btn-xs btn-primary py-0 px-1" style="font-size: 11px;">
+                                                <i class="bi bi-start"></i> Đánh giá
+                                            </a>
+                                        }else if(!currentReview.IsEdited){
+                                            {renderReview(currentReview);}
+                                            <a href="/Product/WriteReview?ProductId=@p.ProductId&orderId=@order.Id" class="btn btn-xs btn-warning py-0 px-1" style="font-size: 11px;">
+                                                <i class="bi bi-pencil"></i> Sửa đánh giá
+                                            </a>
+                                        }else{
+                                            {renderReview(currentReview);}
+                                            <span class="badge bg-light text-muted border fw-normal" style="font-size: 0.7rem;">Đã đánh giá</span>
+                                        }
+                                    }
+                                } <br />
+                            </div>
+                        }
+                    }
+                </td>
+                <td class="text-primary fw-bold">
+                    @order.TotalAmount.ToString("N0") đ
+                </td>
+                <td>
+                    @{
+                        var statusClass = order.Status == "Chờ thanh toán" ? "bg-secondary": order.Status == "Chờ xác nhận" ? "bg-warning": order.Status == "Đã xác nhận" ? "bg-info": order.Status == "Đang giao" ? "bg-primary": order.Status == "Hoàn thành" ? "bg-success": "bg-danger";
+                    }
+                    <span class="badge @statusClass mb-2">@order.Status</span>
+                    @if(order.Status == "Đang giao"){
+                        <div class="mb-2 text-success small fw-bold">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            Dự kiến nhận hàng: @DateTime.Now.AddDays(2).ToString("dd/MM") - @DateTime.Now.AddDays(4).ToString("dd/MM")
+                        </div>
+                        <form asp-action="ConfirmReceipt" asp-controller="Product" method="post">
+                            <input type="hidden" name="id" value="@order.Id" />
+                            <button type="submit" class="btn btn-sm btn-success w-100 mt-1">
+                                <i class="bi bi-box-seam"></i> Đã nhận hàng
+                            </button>
+                        </form>
+                    }
+                    @if(order.Status == "Chờ xác nhận"){
+                        <div class="mb-2 text-success small fw-bold">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            Dự kiến nhận hàng: @DateTime.Now.AddDays(2).ToString("dd/MM") - @DateTime.Now.AddDays(4).ToString("dd/MM")
+                        </div>
+                    }
+                    @if(order.Status == "Đã xác nhận"){
+                        <div class="mb-2 text-success small fw-bold">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            Dự kiến nhận hàng: @DateTime.Now.AddDays(2).ToString("dd/MM") - @DateTime.Now.AddDays(4).ToString("dd/MM")
+                        </div>
+                    }
+                    @if(order.Status == "Chờ thanh toán"){
+                        <form asp-action="CancelOrder" asp-controller="Product" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')">
+                            <input type="hidden" name="id" value="@order.Id" />
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="openCancelModal(@order.Id)">
+                                <i class="bi bi-x-circle"></i> Hủy đơn
+                            </button>
+                        </form>
+                        var deadline = order.OrderDate?.AddMinutes(30);
+                        var timeLeft = deadline.HasValue ? (deadline.Value - DateTime.Now) : TimeSpan.Zero;
+                        if(timeLeft.TotalSeconds > 0){
+                            <div class="alert alert-warning p-1" style="font-size: 0.8rem;">
+                                <i class="bi bi-exclamation-triangle"></i> Tự động hủy sau: <span class="countdown" data-time = "@deadline.Value.ToString("yyyy-MM-ddTHH:mm:ss")">--:--</span>
+                            </div>
+                            <hr class="my-1" />
+                            <a asp-controller="Cart" asp-action="RePayment" asp-route-orderId = "@order.Id" class="btn btn-sm btn-success w-100 fw-bold">
+                                <i class="bi bi-credit-card"></i> THANH TOÁN NGAY
+                            </a>
+                        }
+                    }
+                    @if(order.Status == "Đã hủy"){
+                        <div class="mt-2 p-2 border-start border-danger border-3 bg-light" style="max-width: 250px;">
+                            <small class="text-danger d-block fw-bold">
+                                <i class="bi bi-info-circle"></i> Lý do:
+                            </small>
+                            <small class="text-secondary">
+                                @(!string.IsNullOrEmpty(order.CancellationReason) ? order.CancellationReason : "Không có lý do cụ thể.")
+                            </small>
+                            @if(order.DateCancelled != null){
+                                <br />
+                                <small class="text-muted" style="font-size: 0.7rem;">
+                                    Thời gian: @order.DateCancelled.Value.ToString("HH:mm dd/MM")
+                                </small>
+                            }
+                        </div>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CancelOrder" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Lý do hủy đơn</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="cancelOrderId" />
+                    <label class="form-label">
+                            Vui lòng cho biết lý do bạn muốn hủy đơn:
+                    </label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input cancel-reason-radio" type="radio" name="reasonOption" id = "reason1" value="Muốn thay đổi địa chỉ nhận hàng" checked />
+                        <label class="form-check-label" for = "reason1">
+                            Muốn thay đổi địa chỉ nhận hàng.
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input cancel-reason-radio" type="radio" name="reasonOption" id = "reason2" value="Muốn nhập/thay đổi mã Voucher" />
+                        <label class="form-check-label" for = "reason2">
+                            Muốn nhập/thay đổi mã Voucher.
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input cancel-reason-radio" type="radio" name="reasonOption" id = "reason3" value="Tìm thấy giá rẻ hơn ở nơi khác" />
+                        <label class="form-check-label" for = "reason3">
+                            Tìm thấy giá rẻ hơn ở nơi khác.
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input cancel-reason-radio" type="radio" name="reasonOption" id = "reason4" value="Đổi ý, không muốn mua nữa" />
+                        <label class="form-check-label" for = "reason4">
+                            Đổi ý, không muốn mua nữa.
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input cancel-reason-radio" type="radio" name="reasonOption" id = "reasonOther" value="Khác" />
+                        <label class="form-check-label" for = "reasonOther">
+                            Lý do khác.
+                        </label>
+                    </div>
+                    <div id = "otherReasonContainer" class="mt-3" style="display: none;">
+                        <label class="form-label">Chi tiết lý do khác:</label>
+                        <textarea id = "otherReasonText" name="otherReason" class="form-control" rows="3" placeholder="Vui lòng nhập lý do cụ thể..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                    <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        function startCountdowns() {
+            const timers = document.querySelectorAll('.countdown')
+            timers.forEach(timer => {
+                const deadline = new Date(timer.getAttribute('data-time')).getTime()
+                const x = setInterval(function(){
+                    const now = new Date().getTime()
+                    const distance = deadline - now
+                    if(distance < 0){
+                        clearInterval(x)
+                        timer.innerHTML = "Hết hạn"
+                        location.reload()
+                        return
+                    }
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000)
+                    timer.innerHTML = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds)
+                }, 1000)
+            })
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            startCountdowns()
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle = "tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl){
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        })
+        function openCancelModal(orderId){ // thêm thuộc tính value cho input hidden
+            document.getElementById('cancelOrderId').value = orderId 
+            var myModal = new bootstrap.Modal(document.getElementById('cancelOrderModal'))
+            myModal.show()
+        }
+        $(document).ready(function(){
+            $('.cancel-reason-radio').change(function(){ // khi khách hàng chọn 1 nút radio
+                if($(this).val() === 'Khác'){
+                    $('#otherReasonContainer').slideDown()
+                    $('#otherReasonText').attr('required', true)
+                }else{
+                    $('#otherReasonContainer').slideUp()
+                    $('#otherReasonText').attr('required', false)
+                    $('#otherReasonText').val('')
+                }
+            })
+        })
+    </script>
+}

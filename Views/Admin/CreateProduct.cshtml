@@ -1,0 +1,73 @@
+@model SimpleEcom.Models.Product
+
+<div class="container mt-4" style="max-width: 700px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Thêm sản phẩm mới</h5>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="CreateProduct" method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên sản phẩm</label>
+                            <input asp-for="Name" class="form-control" placeholder="Nhập tên..." required />
+                            <span asp-validation-for="Name" class="text-danger-small"></span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Giá bán (VNĐ)</label>
+                                <input asp-for="Price" type="number" class="form-control" placeholder="0" required />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Số lượng trong kho</label>
+                                <input asp-for="Stock" type="number" class="form-control" min="0" required />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Danh mục</label>
+                                <select asp-for="Category" class="form-select">
+                                    <option value="Điện tử">Điện tử</option>
+                                    <option value="Điện tử">Gia dụng</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <label class="form-label fw-bold">Ảnh chính</label>  
+                        <div class="border rounded p-2 mb-2" style="height: 150px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                            <img id="preview" src="/images/no-image.png" style="max-height: 100%; max-width: 100%; display: none;" />
+                            <span id="placeholder" class="text-muted small">Chưa có ảnh</span>
+                        </div>  
+                        <input type="file" name="mainImage" id="imageInput" class="form-control form-control-sm" accept="image/*" />      
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <label class="form-label fw-bold">Ảnh phụ</label>  
+                        <div class="border rounded p-2 mb-2" style="height: 150px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                            <img id="preview" src="/images/no-image.png" style="max-height: 100%; max-width: 100%; display: none;" />
+                            <span id="placeholder" class="text-muted small">Chưa có ảnh</span>
+                        </div>  
+                        <input type="file" name="subImages" id="imageInput" class="form-control form-control-sm" accept="image/*" multiple />      
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <label class="form-label fw-bold">Video sản phẩm</label>
+                        <div class="border rounded p-2 mb-2" style="height: 150px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                            <i class="bi bi-camera-video text-muted" style="font-size: 2rem;"></i>
+                            <span class="text-muted small">Chưa có video</span>
+                        </div>
+                        <input type="file" name="videoFile" class="form-control form-control-sm" accept="video/mp4,video/x-m4v,video/*" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mô tả</label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Nhập đặc điểm nổi bật..."></textarea>
+                </div>
+                <hr />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-controller="Admin" asp-action="Products" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-success px-4"><i class="bi bi-save-me-1"></i>Lưu sản phẩm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

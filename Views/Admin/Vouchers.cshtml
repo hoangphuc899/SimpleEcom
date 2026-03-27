@@ -1,0 +1,177 @@
+@model IEnumerable<SimpleEcom.Models.Voucher>
+
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-ticket-perforated"></i> Quản lý Voucher</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm p-3">
+                <h5>Tạo mã mới</h5>
+                <form asp-action="CreateVoucher" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Mã Voucher (Code)</label>
+                        <input name="Code" class="form-control" placeholder="Ví dụ: GIAM50K" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Loại giảm giá</label>
+                        <select name="IsPercent" class="form-select">
+                            <option value="false">Giảm theo số tiền cố định</option>
+                            <option value="true">Giảm theo phần trăm</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Giá trị giảm (đ hoặc %)</label>
+                        <input type="number" name="DiscountValue" class="form-control" placeholder="Ví dụ 10 hoặc 50 000" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Giảm tối đa(VNĐ)-Nếu chọn %</label>
+                        <input type="number" name="MaxDiscount" class="form-control" placeholder="Ví dụ 100 000" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
+                        <input type="number" name="MinOrderAmount" class="form-control" placeholder="Ví dụ: 20 000 000đ" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Giới hạn lượt dùng</label>
+                        <input type="number" name="UsageLimit" class="form-control"     value="1" required />
+                        <small class="text-muted">Tổng số lần mã có thể được dùng</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ngày hết hạn</label>
+                        <input type="datetime-local" name="ExpiryDate" class="form-control" required />
+                        <small class="text-muted">Mã sẽ tự động vô hiệu sau thời điểm này</small>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="IsActive" value="true" class="form-check-input" id = "active" checked />
+                        <label class="form-check-label" for = "active">Kích hoạt ngay</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Lưu Voucher</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <table class="table table-hover border">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã</th>
+                        <th>Loại giảm giá</th>
+                        <th>Đơn tối thiểu</th>
+                        <th>Lượt dùng</th>
+                        <th>Hết hạn</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var v in Model){
+                        <tr>
+                            <td class="align-middle">
+                                <span class="badge bg-light text-primary border border-primary px-3 py-2">
+                                    <i class="bi bi-tag-fill"></i> @v.Code
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                @if(v.IsPercent){
+                                    <div>
+                                        <span class="text-danger fw-bold">
+                                            @v.DiscountValue%
+                                        </span>
+                                        @if(v.MaxDiscount.HasValue && v.MaxDiscount > 0){
+                                            <br />
+                                            <small class="text-muted">
+                                                (Tối đa: @v.MaxDiscount.Value.ToString("N0")đ)
+                                            </small>
+                                        }
+                                    </div>
+                                }else{
+                                    <span class="text-success fw-bold">
+                                        -@v.DiscountValue.ToString("N0")đ
+                                    </span>
+                                }
+                            </td>
+                            <td class="align-middle">
+                                <span class="text-muted">Từ: </span>
+                                <strong>@v.MinOrderAmount.ToString("N0")đ</strong>
+                            </td>
+                            <td class="align-middle">
+                                @{
+                                var percent = v.UsageLimit > 0 ? (v.UsedCount * 100) / v.UsageLimit : 0;
+                                }
+                            <div class="progress" style="height: 15px; width: 100px;">
+                                <div class="progress-bar @(percent >= 100 ? "bg-secondary":(percent > 80 ? "bg-danger":"bg-success"))" role="progressbar" style="width: @percent%;">
+                                </div>
+                            </div>
+                                <small class="text-muted">@v.UsedCount / @v.UsageLimit lượt</small>
+                            </td>
+                            <td class="align-middle">
+                                @{var isExpired = DateTime.Now > v.ExpiryDate;}
+                                <div class="@(isExpired ? "text-danger":"")">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    @v.ExpiryDate.ToString("dd/MM/yyyy HH:mm")
+                                    @if(isExpired) {
+                                        <br /> 
+                                        <small class="fw-bold">[HẾT HẠN]</small>
+                                    }
+                                </div>
+                            </td>
+                            <td class="align-middle text-center">
+                                @if(v.IsActive && !isExpired){
+                                    <span class="badge rounded-pill bg-success">Đang chạy</span>
+                                }
+                                else if(isExpired){
+                                    <span class="badge rounded-pill bg-danger">Quá hạn</span>
+                                }
+                                else{
+                                    <span class="badge rounded-pill bg-secondary">Đã tắt</span>
+                                }   
+                            </td>
+                            <td class="align-middle text-center">
+                                <button class="btn btn-sm btn-outline-warning shadow-sm" data-bs-toggle = "modal" data-bs-target = "#editModal-@v.Id">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <a asp-action="DeleteVoucher" asp-route-id = "@v.Id" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Xóa mã này?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <div class="modal fade" id="editModal-@v.Id" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form asp-action="EditVoucher" method="post">
+                                        <div class="modal-header bg-warning text-dark">
+                                            <h5 class="modal-title">
+                                                <i class="bi bi-pencil-square"></i> Sửa Voucher: @v.Code
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss = "modal"></button>
+                                        </div> 
+                                        <div class="modal-body text-start">
+                                            <input type="hidden" name="Id" value="@v.Id" />
+                                            <input type="hidden" name="Code" value="@v.Code" />
+                                            <input type="hidden" name="IsPercent" value="@v.IsPercent.ToString().ToLower()" />
+                                            <input type="hidden" name="DiscountValue" value="@v.DiscountValue" />
+                                            <input type="hidden" name="MaxDiscount" value="@v.MaxDiscount" />
+                                            <input type="hidden" name="ExpiryDate" value="@(v.ExpiryDate.ToString("yyyy-MM-ddTHH:mm"))" />
+                                            <input type="hidden" name="IsActive" value="@v.IsActive.ToString().ToLower()" />
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold small">Đơn tối thiểu (đ)</label>
+                                                <input type="number" name="MinOrderAmount" value="@v.MinOrderAmount" class="form-control" />
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold small">Lượt dùng</label>
+                                                <input type="number" name="UsageLimit" value="@v.UsageLimit" class="form-control" />
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-warning">
+                                                Lưu thay đổi
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

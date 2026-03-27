@@ -1,0 +1,128 @@
+﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Identity
+@inject IHttpContextAccessor HttpContextAccessor
+@inject SignInManager<IdentityUser> SignInManager
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SimpleEcom</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SimpleEcom.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SimpleEcom</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="btn btn-outline-info btn-sm rounded-pill me-1" asp-controller="Product" asp-action="Index">
+                                <i class="bi bi-box-seam me-1"></i> Sản phẩm
+                            </a>
+                        </li>
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="btn btn-outline-warning btn-sm rounded-pill me-1" asp-controller="Admin" asp-action="Products">
+                                        <i class="bi bi-box-seam"></i> Quản lý kho
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="btn btn-outline-primary btn-sm rounded-pill me-1" asp-controller="Admin" asp-action="Orders">
+                                        <i class="bi bi-receipt"></i> Đơn hàng
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="btn btn-outline-success btn-sm rounded-pill me-1" asp-controller="Admin" asp-action="Vouchers">
+                                        <i class="bi bi-receipt"></i> Quản lý Voucher
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="btn btn-outline-warning btn-sm rounded-pill me-1" asp-controller="Admin" asp-action="ReportedReviews">
+                                        <i class="bi bi-flag"></i> Báo cáo mới
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item">
+                                    <a class="btn btn-outline-warning btn-sm rounded-pill me-1" asp-controller="Product" asp-action="MyOrders">
+                                        <i class="bi bi-receipt"></i> Đơn hàng
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="btn btn-outline-success btn-sm rounded-pill me-1" asp-controller="Cart" asp-action="Index">
+                                        <i class="bi bi-cart4"></i> Giỏ hàng
+                                    </a>
+                                </li>
+                                @if(User.Identity.IsAuthenticated){
+                                    <li class="nav-item">
+                                        <a class="nav-link text-danger fw-bold" asp-controller="WishList" asp-action="Index">
+                                            <i class="bi bi-heart-fill"></i> Yêu thích
+                                        </a>
+                                    </li>
+                                }
+                            }
+                        }
+                    </ul>
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        @if(SignInManager.IsSignedIn(User))
+                        {  
+                            <li class="nav-item">
+                                <span class="btn btn-outline-info btn-sm rounded-pill me-1">
+                                    <i class="bi bi-person-circle"></i> Chào, @User.Identity.Name.Split('@')[0]
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout"
+                                method="post">
+                                    <button type="submit" class="btn btn-danger btn-sm rounded-pill me-1">
+                                        <i class="bi bi-box-arrow-right"></i> Thoát
+                                    </button>
+                                </form>
+                            </li>
+                        }else{
+                            <li class="nav-item">
+                                <a class="btn btn-outline-info me-1" asp-area="Identity" asp-page="/Account/Login">
+                                    <i class="bi bi-shield-lock"></i> Đăng nhập
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - SimpleEcom - <a asp-area="" asp-controller="Home" asp-action="Contact">Liên hệ</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

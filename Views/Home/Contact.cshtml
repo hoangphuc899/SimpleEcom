@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Liên hệ với chúng tôi";
+}
+<div class="container mt-5 mb-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary">Liên hệ</h1>
+        <p class="lead text-muted">@ViewBag.Message</p>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100 p-4">
+                <div class="d-flex mb-4">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="bi bi-geo-alt-fill text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Địa chỉ</h5>
+                        <p class="text-muted mb-0">123 Đường ABC, Quận 1, Sài Gòn.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="bi bi-telephone-fill text-success fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Điện thoại</h5>
+                        <p class="text-muted mb-0">0123 456 789.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="bi bi-envelope-fill text-info fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Email</h5>
+                        <p class="text-muted mb-0">phuc@example.com</p>
+                    </div>
+                </div>
+                <hr />
+                <div class="mt-2">
+                    <h6 class="fw-bold">Thời gian làm việc:</h6>
+                    <p class="small text-muted mb-1">Thứ 2 - Thứ 6: 08:00 - 21:00</p>
+                    <p class="small text-muted">Thứ 7 - CN: 09:00 - 18:00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .card{
+        transition: transform 0.3s ease;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    .card:hover{
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+    .card h5{
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+</style>

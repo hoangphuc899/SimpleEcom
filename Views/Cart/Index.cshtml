@@ -1,0 +1,131 @@
+@model List<SimpleEcom.Models.CartItem>
+@inject ICartService CartService
+
+@if(TempData["Error"] != null){
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss = "alert" aria-label="Close"></button>
+    </div>
+}
+<div class="container mt-4">
+    <h2>Giỏ hàng của bạn</h2>
+    <form asp-action="UpdateCart" method="post">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>Đơn giá</th>
+                    <th style="width: 150px;">Số lượng</th>
+                    <th>Thành tiền</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(int i = 0; i < Model.Count; ++i)
+                {
+                    <tr>
+                        <td>@Model[i].ProductName</td>
+                        <td>@Model[i].Price.ToString("N0") đ</td>
+                        <td>
+                            <input type="hidden" name="items[@i].ProductId" value="@Model[i].ProductId" />
+                            <input type="number" name="items[@i].Quantity" value="@Model[i].Quantity"
+                                class="form-control form-control-sm" min="1" />
+                        </td>
+                        <td>@((Model[i].Price * Model[i].Quantity).ToString("N0")) đ</td>
+                        <td>
+                            <a asp-action="RemoveFromCart" asp-route-id="@Model[i].ProductId" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Xóa sản phẩm nầy khỏi giỏ hàng?')">
+                                Xóa
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-outline-primary btn-sm mb-2">
+                <i class="bi bi-arrow-clockwise"></i> Cập nhật giỏ hàng
+            </button>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-outline-info">
+                <i class="bi bi-arrow-left-circle"></i> Tiếp tục mua sắm
+            </a>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 rounded-3 mb-4 bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="bi bi-ticket-perforated-fill text-primary"></i> Mã giảm giá dành cho bạn
+                        </h5>
+                        <div class="row row-cols-1 row-cols-md-2 g-3">
+                            @if(ViewBag.AvailableVouchers != null){
+                                foreach(var v in (List<SimpleEcom.Models.Voucher>)ViewBag.AvailableVouchers){
+                                    <div class="col">
+                                        <div class="card h-100 border-dashed border-primary bg-white">
+                                            <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                                <div class="fw-bold text-primary">@v.Code</div>
+                                                <div class="text-muted small">
+                                                    Giảm: @(v.IsPercent ? v.DiscountValue + "%": v.DiscountValue.ToString("N0") + "đ")
+                                                    - Đơn từ: @v.MinOrderAmount.ToString("N0")đ
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="useThisCode('@v.Code')">
+                                                Dùng ngay
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group mb-3" style="max-width: 300px;">
+                    <input type="text" id="voucherInput" class="form-control form-control-sm" placeholder="Nhập mã giảm giá (ví dụ: GIAM50K)" />
+                    <button class="btn btn-dark btn-sm" type="button" onclick="applyVoucher()">
+                        Áp dụng
+                    </button>
+                </div>
+                <div id="voucherMessage" class="small mt-1"></div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <p class="mb-0 text-muted small">Tổng tiền thanh toán:</p>
+                <h3 class="text-success mb-3" id = "cartTotal">
+                    @CartService.GetTotal().ToString("N0") đ
+                </h3>
+                <a asp-action="Checkout" class="btn btn-success btn-lg w-100">
+                    Thanh toán ngay <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+@section Scripts
+{
+    <script>
+        function useThisCode(code){
+            document.getElementById("voucherInput").value = code
+            applyVoucher()
+        }
+        function applyVoucher(){
+            var code = document.getElementById("voucherInput").value
+            $.post('Cart/ApplyVoucher', {voucherCode: code}, function(data){
+                if(data.success){
+                    alert(data.message + " Bạn được giảm: " + data.discount.toLocaleString() + "đ")
+                    var currentTotal = parseFloat("@CartService.GetTotal()")
+                    var newTotal = currentTotal - data.discount
+
+                    document.getElementById("cartTotal").innerText = newTotal.toLocaleString() + "đ"
+                    document.getElementById("voucherMessage").innerHTML = "<span class = 'text-success'>Đã áp dụng mã:" + code + "</span>"
+                }
+                else alert(data.message)
+            })
+        }
+    </script>
+}
+<style>
+    .border-dashed{
+        border-style: dashed !important;
+        border-width: 2px !important;
+    }
+    .card-body p{margin-bottom: 0;}
+</style>

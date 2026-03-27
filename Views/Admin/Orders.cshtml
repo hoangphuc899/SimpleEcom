@@ -1,0 +1,132 @@
+@model IEnumerable<SimpleEcom.Models.Order>
+
+<div class="container mt-3">
+    <h3><i class="bi bi-cart-check-fill"></i> Quản lý đơn hàng</h3>
+    <hr />
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a asp-action="Orders" asp-route-status = "" class="btn btn-sm @(string.IsNullOrEmpty(ViewBag.CurrentStatus) ? "btn-dark":"btn-outline-dark")">
+            Tất cả đơn
+        </a>
+        <a asp-action="Orders" asp-route-status = "Chờ thanh toán" class="btn btn-sm @((ViewBag.CurrentStatus == "Chờ thanh toán") ? "btn-warning":"btn-outline-warning")">
+            Chờ thanh toán
+        </a>
+        <a asp-action="Orders" asp-route-status = "Chờ xác nhận" class="btn btn-sm @((ViewBag.CurrentStatus == "Chờ xác nhận") ? "btn-secondary":"btn-outline-secondary")">
+            Chờ xác nhận
+        </a>
+        <a asp-action="Orders" asp-route-status = "Đã xác nhận" class="btn btn-sm @((ViewBag.CurrentStatus == "Đã xác nhận") ? "btn-info":"btn-outline-info")">
+            Đã xác nhận
+        </a>
+        <a asp-action="Orders" asp-route-status = "Đang giao" class="btn btn-sm @((ViewBag.CurrentStatus == "Đang giao") ? "btn-primary":"btn-outline-primary")">
+            Đang giao
+        </a>
+        <a asp-action="Orders" asp-route-status = "Hoàn thành" class="btn btn-sm @((ViewBag.CurrentStatus == "Hoàn thành") ? "btn-success":"btn-outline-success")">
+            Hoàn thành
+        </a>
+        <a asp-action="Orders" asp-route-status = "Đã hủy" class="btn btn-sm @((ViewBag.CurrentStatus == "Đã hủy") ? "btn-danger":"btn-outline-danger")">
+            Đã hủy
+        </a>
+    </div>
+    <div class="mb-3">
+        @if(User.Identity.IsAuthenticated){
+            <a href="/admin/products" class="btn btn-outline-dark btn-sm"><i class="bi bi-boxes me-1"></i> Quản lý kho hàng</a>
+        }
+    </div>
+    <p><strong>Tổng doanh thu: </strong>
+        <span class="text-success">@ViewBag.TotalRevenue.ToString("N0") đ</span>
+    </p>
+    <table class="table table-sm table-bordered">
+        <thead class="bg-light">
+            <tr>
+                <td>Khách hàng</td>
+                <td>Sản phẩm đã mua</td>
+                <td>Thành tiền</td>
+                <td>Trạng thái</td>
+                <td>Thao tác</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var item in Model){
+                <tr>
+                    <td>
+                        <div class="fw-bold text-primary">@item.CustomerName</div>
+                        <div class="small">
+                            <i class="bi bi-telephone"></i> @item.Phone <br />
+                            <i class="bi bi-calendar-plus"></i> Đặt: @item.OrderDate?.ToString("HH:mm dd/MM/y") <br />
+                            @if(item.Status == "Đã hủy" && item.DateCancelled != null){
+                                <span class="text-danger">
+                                    <i class="bi bi-calendar-x"></i> Hủy: @item.DateCancelled.Value.ToString("HH:mm dd/MM/y")
+                                </span> <br />
+                                var duration = (item.DateCancelled.Value - item.OrderDate.Value).TotalMinutes;
+                                <small class="text-muted italic">(Bị hủy sau @Math.Round(duration) phút)</small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        @if(!string.IsNullOrEmpty(item.OrderItemsJson)){
+                            var items = Newtonsoft.Json.JsonConvert.DeserializeObject<List<CartItem>>(item.OrderItemsJson);
+                            @foreach(var p in items){
+                                <span>- @p.ProductName (x @p.Quantity)</span> <br />
+                            }
+                        }
+                    </td>
+                    <td class="text-primary fw-bold">@item.TotalAmount.ToString("N0") đ</td>
+                    <td>
+                        @{
+                            var statusClass = item.Status == "Chờ thanh toán" ? "bg-secondary": item.Status == "Chờ xác nhận" ? "bg-warning": item.Status == "Đã xác nhận" ? "bg-info": item.Status == "Đang giao" ? "bg-primary": item.Status == "Hoàn thành" ? "bg-success": "bg-danger";
+                        }
+                        <span class="badge @statusClass mb-2">@item.Status</span>
+                        <br />
+                        @if(item.Status == "Chờ xác nhận"){
+                            <form asp-action="UpdateOrderStatus" method="post" style="display: inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="newStatus" value="Đã xác nhận" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-check2-circle"></i> Xác nhận đơn 
+                                </button>
+                            </form>
+                            <form asp-action="UpdateOrderStatus" method="post" style="display: inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="newStatus" value="Đã hủy" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hủy đơn nầy?')">
+                                    <i class="bi bi-x-circle"></i> Hủy 
+                                </button>
+                            </form>
+                        }else if(item.Status == "Đã xác nhận"){
+                            <form asp-action="UpdateOrderStatus" method="post" style="display: inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="newStatus" value="Đang giao" />
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-truck"></i> Giao hàng 
+                                </button>
+                            </form>
+                            <form asp-action="UpdateOrderStatus" method="post" style="display: inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="newStatus" value="Đã hủy" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hủy đơn nầy?')">
+                                    <i class="bi bi-x-circle"></i> Hủy 
+                                </button>
+                            </form>
+                        }else if(item.Status == "Đã hủy"){
+                            if(!string.IsNullOrEmpty(item.CancellationReason)){
+                                <div class="small text-muted mt-1" style="max-width: 200px; white-space: normal;">
+                                    <i class="bi bi-info-circle"></i> 
+                                    <strong>Lý do:</strong> @item.CancellationReason
+                                </div>
+                            }
+                            if(item.DateCancelled.HasValue){
+                                <div class="text-secondary" style="font-size: 0.75rem;">
+                                    vào: @item.DateCancelled.Value.ToString("HH:mm dd/MM/yyyy")
+                                </div>
+                            }
+                        }
+                    </td>
+                    <td>
+                        @if(User.Identity.IsAuthenticated){
+                            <a asp-controller="Admin" asp-action="DeleteOrder" asp-route-id = "@item.Id" class="text-danger" onclick="return confirm('Xóa đơn?')">Xóa</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
